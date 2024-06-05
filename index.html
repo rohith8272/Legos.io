@@ -1,106 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thrust Loading vs Wing Loading</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        h1 {
-            text-align: center;
-        }
-        .form-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-bottom: 20px;
-            gap: 10px;
-        }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .form-group label {
-            margin-bottom: 5px;
-        }
-        .form-group input {
-            width: 100px;
-            padding: 5px;
-        }
-        #plot {
-            width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        #wingArea {
-            max-width: 800px;
-            margin: 20px auto;
-            background-color: #fff;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <h1>Thrust Loading vs Wing Loading</h1>
-    <div class="form-container">
+<body class="font-sans bg-gray-100 p-20">
+    <h1 class="text-center text-3xl mb-8">Thrust Loading vs Wing Loading</h1>
+    <div class="flex flex-wrap justify-center gap-4 mb-8">
         <div class="form-group">
             <label for="Peta">Propulsion efficiency:</label>
-            <input type="number" id="Peta" value="0.6" step="0.1" oninput="updatePlot()">
+            <input type="number" id="Peta" value="0.6" step="0.1" oninput="updatePlot()" class="w-24 px-2 py-1 border rounded">
         </div>
         <div class="form-group">
             <label for="Meta">Mechanical efficiency:</label>
-            <input type="number" id="Meta" value="0.7" step="0.1" oninput="updatePlot()">
+            <input type="number" id="Meta" value="0.7" step="0.1" oninput="updatePlot()" class="w-24 px-2 py-1 border rounded">
         </div>
         <div class="form-group">
             <label for="rho">Density (kg/m3):</label>
-            <input type="number" id="rho" value="1.2" step="0.1" oninput="updatePlot()">
+            <input type="number" id="rho" value="1.2" step="0.1" oninput="updatePlot()" class="w-24 px-2 py-1 border rounded">
         </div>
         <div class="form-group">
             <label for="rhoSL">Sea level density (kg/m3):</label>
-            <input type="number" id="rhoSL" value="1.225" step="0.1" oninput="updatePlot()">
+            <input type="number" id="rhoSL" value="1.225" step="0.1" oninput="updatePlot()" class="w-24 px-2 py-1 border rounded">
         </div>
         <div class="form-group">
             <label for="CD0">CD0:</label>
-            <input type="number" id="CD0" value="0.04" step="0.01" oninput="updatePlot()">
+            <input type="number" id="CD0" value="0.04" step="0.01" oninput="updatePlot()" class="w-24 px-2 py-1 border rounded">
         </div>
         <div class="form-group">
             <label for="e">Oswald efficiency ratio (e):</label>
-            <input type="number" id="e" value="0.8" step="0.1" oninput="updatePlot()">
+            <input type="number" id="e" value="0.8" step="0.1" oninput="updatePlot()" class="w-24 px-2 py-1 border rounded">
         </div>
         <div class="form-group">
             <label for="AR">Aspect ratio:</label>
-            <input type="number" id="AR" value="6.5" step="0.1" oninput="updatePlot()">
+            <input type="number" id="AR" value="6.5" step="0.1" oninput="updatePlot()" class="w-24 px-2 py-1 border rounded">
         </div>
         <div class="form-group">
             <label for="V">Cruise airspeed (m/s):</label>
-            <input type="number" id="V" value="15" step="1" oninput="updatePlot()">
+            <input type="number" id="V" value="15" step="1" oninput="updatePlot()" class="w-24 px-2 py-1 border rounded">
         </div>
         <div class="form-group">
             <label for="Vstall">Stall airspeed (m/s):</label>
-            <input type="number" id="Vstall" value="10" step="1" oninput="updatePlot()">
+            <input type="number" id="Vstall" value="10" step="1" oninput="updatePlot()" class="w-24 px-2 py-1 border rounded">
         </div>
         <div class="form-group">
             <label for="W">MTOW (kg):</label>
-            <input type="number" id="W" value="7" step="1" oninput="updatePlot()">
+            <input type="number" id="W" value="7" step="1" oninput="updatePlot()" class="w-24 px-2 py-1 border rounded">
         </div>
         <div class="form-group">
             <label for="ROC">Rate of climb (m/s):</label>
-            <input type="number" id="ROC" value="3" step="1" oninput="updatePlot()">
+            <input type="number" id="ROC" value="3" step="1" oninput="updatePlot()" class="w-24 px-2 py-1 border rounded">
         </div>
         <div class="form-group">
             <label for="CLmax">CLmax:</label>
-            <input type="number" id="CLmax" value="1.5" step="0.1" oninput="updatePlot()">
+            <input type="number" id="CLmax" value="1.5" step="0.1" oninput="updatePlot()" class="w-24 px-2 py-1 border rounded">
         </div>
     </div>
-    <div id="plot"></div>
-    <div id="wingArea"></div>
+    <div id="plot" class="max-w-800px mx-auto"></div>
+    
     <script>
         function updatePlot() {
             const Peta = parseFloat(document.getElementById('Peta').value);
@@ -225,3 +185,4 @@
         
     </script>
 </body>
+</html>
