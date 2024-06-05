@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICAO Atmosphere Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>ICAO Atmosphere Calculator</h1>
+    <canvas id="atmosphereChart" width="800" height="600"></canvas>
+    
+    <script>
+        function ISAfunction(z, T0, B, gamma, R, P0, g) {
+            let T = [];
+            let P = [];
+            let a = [];
+            let mu = [];
+            let rho = [];
+
+            // Lapse rates in K/km
+            const B1 = -6.5, B2 = 0, B3 = 1, B4 = 2.8, B5 = 0, B6 = -2.8, B7 = -2;
+            
+            let T11, T20, T32, T47, T51, T71;
+            for (let i = 0; i < z.length; i++) {
+                if (z[i] <= 11) {
+                    T[i] = T0 + (B1 * z[i]);
+                    T11 = T[i];
+                } else if (z[i] <= 20) {
+                    T[i] = T11 + (B2 * (z[i] - 11));
+                    T20 = T[i];
+                } else if (z[i] <= 32) {
+                    T[i] = T20 + (B3 * (z[i] - 20));
+                    T32 = T[i];
+                } else if (z[i] <= 47) {
+                    T[i] = T32 + (B4 * (z[i] - 32));
+                    T47 = T[i];
+                } else if (z[i] <= 51) {
+                    T[i] = T47 + (B5 * (z[i] - 47));
+                    T51 = T[i];
+                } else if (z[i] <= 71) {
+                    T[i] = T51 + (B6 * (z[i] - 51));
+                    T71 = T[i];
+                } else {
+                    T[i] = T71 + (B7 * (z[i] - 71));
+                }
+
+                P[i] = P0 * Math.pow((1 - (B1 * (z[i] * 1000) / T0)), (g / (R * B1)));
+                a[i] = Math.sqrt(gamma * R * T[i]);
+                mu[i] = (1.458e-6) * Math.pow(T[i], 1.5) / (T[i] + 110.4);
+                rho[i] = P[i] / (R * T[i]);
+            }
+
+            return { mu, T, a, P, rho };
+        }
+
+        const z = Array.from({length: 87}, (_, i) => i);  // Altitude in km
+        const T0 = 288.15;
+        const g = 9.81;
+        const gamma = 1.4;
+        const R = 287;
+        const P0 = 101325;
+        const B = -6.5;
+
+        const { mu, T, a, P, rho } = ISAfunction(z, T0, B, gamma, R, P0, g);
+
+        const mu0 = 1.789e-5;
+        const a0 = 340.294;
+        const rho0 = 1.225;
+
+        const T_ratio = T.map(t => t / T0);
+        const P_ratio = P.map(p => p / P0);
+        const a_ratio = a.map(ai => ai / a0);
+        const mu_ratio = mu.map(m => m / mu0);
+        const rho_ratio = rho.map(r => r / rho0);
+
+        const ctx = document.getElementById('atmosphereChart').getContext('2d');
+        const atmosphereChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: z,
+                datasets: [
+                    {
+                        label: 'T/T0',
+                        data: T_ratio,
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        fill: false
+                    },
+                    {
+                        label: 'P/P0',
+                        data: P_ratio,
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        fill: false
+                    },
+                    {
+                        label: 'ρ/ρ0',
+                        data: rho_ratio,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        fill: false
+                    },
+                    {
+                        label: 'a/a0',
+                        data: a_ratio,
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        fill: false
+                    },
+                    {
+                        label: 'μ/μ0',
+                        data: mu_ratio,
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Z [km]'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Ratios'
+                        },
+                        min: 0,
+                        max: 2
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'ICAO Atmosphere Calculator'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
