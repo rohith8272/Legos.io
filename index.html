@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legos</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-5">
+
+    <h1 class="text-2xl font-bold text-center text-gray-700 mb-5">LEGOS- UAV system design tool</h1>
+
+
+
+    <!--Constraint analysis and mission requirements-->
+    <div class="flex justify-around mb-5">
+
+        <div id="container3" class="bg-white p-5 rounded-lg shadow-md w-1/2 mr-5">
+            <button onclick="toggleCalculator('calculator3')" class="bg-blue-500 text-white py-2 px-4 rounded mb-4 hover:bg-blue-700">Mission requirements</button>
+            <div id="calculator3" class="hidden">
+                
+                    <h2 class="text-xl font-bold mb-4">Mission requirements</h2>
+                    <div class="form-group mb-2">
+                        <label for="Payloadweight" class="font-bold">Weight [kg]:</label>
+                        <input type="number" id="Payloadweight" value="5" class="w-full border p-1">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="PayloadPower" class="font-bold">Power [W]:</label>
+                        <input type="number" id="PayloadPower" value="200" class="w-full border p-1">
+                    
+                </div>
+            </div> 
+        </div>
+
+        <div id="container4" class="bg-white p-5 rounded-lg shadow-md w-1/2 mr-5">
+            <button onclick="toggleCalculator('calculator4')" class="bg-blue-500 text-white py-2 px-4 rounded mb-4 hover:bg-blue-700">Preliminary sizing</button>
+            <div id="calculator4" class="hidden">
+                <h2 class="text-xl font-bold mb-4">Thrust Loading vs Wing Loading</h2>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="form-group mb-2">
+                        <label for="Peta" class="font-bold">Propulsion efficiency:</label>
+                        <input type="number" id="Peta" value="0.6" step="0.1" oninput="updatePlot()" class="w-full border p-1">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="Meta" class="font-bold">Mechanical efficiency:</label>
+                        <input type="number" id="Meta" value="0.7" step="0.1" oninput="updatePlot()" class="w-full border p-1">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="rho" class="font-bold">Density (kg/m3):</label>
+                        <input type="number" id="rho" value="1.2" step="0.1" oninput="updatePlot()" class="w-full border p-1">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="rhoSL" class="font-bold">Sea level density (kg/m3):</label>
+                        <input type="number" id="rhoSL" value="1.225" step="0.1" oninput="updatePlot()" class="w-full border p-1">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="CD0" class="font-bold">CD0:</label>
+                        <input type="number" id="CD0" value="0.04" step="0.01" oninput="updatePlot()" class="w-full border p-1">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="e" class="font-bold">Oswald efficiency ratio (e):</label>
+                        <input type="number" id="e" value="0.8" step="0.1" oninput="updatePlot()" class="w-full border p-1">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="AR" class="font-bold">Aspect ratio:</label>
+                        <input type="number" id="AR" value="6.5" step="0.1" oninput="updatePlot()" class="w-full border p-1">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="V" class="font-bold">Cruise airspeed (m/s):</label>
+                        <input type="number" id="V" value="15" step="1" oninput="updatePlot()" class="w-full border p-1">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="Vstall" class="font-bold">Stall airspeed (m/s):</label>
+                        <input type="number" id="Vstall" value="10" step="1" oninput="updatePlot()" class="w-full border p-1">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="W" class="font-bold">MTOW (kg):</label>
+                        <input type="number" id="W" value="7" step="1" oninput="updatePlot()" class="w-full border p-1">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="ROC" class="font-bold">Rate of climb (m/s):</label>
+                        <input type="number" id="ROC" value="3" step="1" oninput="updatePlot()" class="w-full border p-1">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="CLmax" class="font-bold">CLmax:</label>
+                        <input type="number" id="CLmax" value="1.5" step="0.1" oninput="updatePlot()" class="w-full border p-1">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="TWmax" class="font-bold">TW limit:</label>
+                        <input type="number" id="TWmax" value="4" step="1" oninput="updatePlot()" class="w-full border p-1">
+                    </div>
+                </div>
+                <div id="plot" class="mt-4"></div>
+                <div id="wingArea" class="mt-4"></div>
+            </div>
+        </div>
+        
+        <style>
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 16px;
+            }
+        </style>
+        
+        <script>
+            function toggleCalculator(id) {
+                const calculator = document.getElementById(id);
+                if (calculator.classList.contains('hidden')) {
+                    calculator.classList.remove('hidden');
+                } else {
+                    calculator.classList.add('hidden');
+                }
+            }
+        
+            function updatePlot() {
+                // Update the plot based on the input values
+            }
+        </script>
+        
+    </div>
+
+    <!--Airframe, Payload and Power-->
+    <div class="flex justify-around mb-5">
+        <div id="container0" class="bg-white p-5 rounded-lg shadow-md w-1/2 mr-5">
+            <button onclick="toggleCalculator('calculator0')" class="bg-blue-500 text-white py-2 px-4 rounded mb-4 hover:bg-blue-700">Airframe module</button>
+            <div id="calculator0" class="hidden">
+                <h2 class="text-xl font-bold mb-4">Aircraft</h2>
+                <div class="form-group mb-2">
+                    <label for="airframe_weight" class="font-bold">Airframe Weight [kg]:</label>
+                    <input type="number" id="airframe_weight" name="airframe_weight" step="any" value="10" class="w-full border p-1">
+                </div>
+                <div class="form-group mb-2">
+                    <label for="avionics_power" class="font-bold">Avionics Power [W]:</label>
+                    <input type="number" id="avionics_power" name="avionics_power" step="any" value="10" class="w-full border p-1">
+                </div>
+                <div class="form-group mb-2">
+                    <label for="fuselage_drag_coeff" class="font-bold">Fuselage Drag Coeff.:</label>
+                    <input type="number" id="fuselage_drag_coeff" name="fuselage_drag_coeff" step="any" value="0.015" class="w-full border p-1">
+                </div>
+                <div class="form-group mb-2">
+                    <label for="zero_lift_drag_coeff" class="font-bold">Zero Lift Drag Coeff.:</label>
+                    <input type="number" id="zero_lift_drag_coeff" name="zero_lift_drag_coeff" step="any" value="0.030" class="w-full border p-1">
+                </div>
+                <div class="form-group mb-2">
+                    <label for="air_density" class="font-bold">Air Density [kg/m³]:</label>
+                    <input type="number" id="air_density" name="air_density" step="any" value="1.225" class="w-full border p-1">
+                </div>
+            </div> 
+        </div>
+
+        <div id="container1" class="bg-white p-5 rounded-lg shadow-md w-1/2 mr-5">
+            <button onclick="toggleCalculator('calculator1')" class="bg-blue-500 text-white py-2 px-4 rounded mb-4 hover:bg-blue-700">Payload</button>
+            <div id="calculator1" class="hidden">
+                
+                    <h2 class="text-xl font-bold mb-4">Payload</h2>
+                    <div class="form-group mb-2">
+                        <label for="Payloadweight" class="font-bold">Weight [kg]:</label>
+                        <input type="number" id="Payloadweight" value="5" class="w-full border p-1">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="PayloadPower" class="font-bold">Power [W]:</label>
+                        <input type="number" id="PayloadPower" value="200" class="w-full border p-1">
+                    
+                </div>
+            </div> 
+        </div>
+
+        <div id="container2" class="bg-white p-5 rounded-lg shadow-md w-1/2">
+            <button onclick="toggleCalculator('calculator2')" class="bg-blue-500 text-white py-2 px-4 rounded mb-4 hover:bg-blue-700">Energy module</button>
+            <div id="calculator2" class="hidden">
+                <h2 class="text-xl font-bold mb-4">Propulsion/Batteries Calculator</h2>
+                <div class="form-group mb-2">
+                    <label for="batteryCapacity" class="font-bold">Battery Pack Capacity (mAh):</label>
+                    <input type="number" id="batteryCapacity" value="5000" oninput="calculate()" class="w-full border p-1">
+                </div>
+                <div class="form-group mb-2">
+                    <label for="energyDensity" class="font-bold">Energy Density (W-h/kg):</label>
+                    <input type="number" id="energyDensity" value="200" oninput="calculate()" class="w-full border p-1">
+                </div>
+                <div class="form-group mb-2">
+                    <label for="cellVoltage" class="font-bold">Cell Voltage (V):</label>
+                    <input type="number" id="cellVoltage" value="3.9" oninput="calculate()" class="w-full border p-1">
+                </div>
+                <div class="form-group mb-2">
+                    <label for="cellsInSeries" class="font-bold">Cells in Series (#s):</label>
+                    <input type="number" id="cellsInSeries" value="12" oninput="calculate()" class="w-full border p-1">
+                </div>
+                <div class="form-group mb-2">
+                    <label for="numberOfBatteries" class="font-bold">Number of Batteries:</label>
+                    <input type="number" id="numberOfBatteries" value="2" oninput="calculate()" class="w-full border p-1">
+                </div>
+                <div class="form-group mb-2">
+                    <label for="totalCapacityUsed" class="font-bold">Total Capacity Used (%):</label>
+                    <input type="number" id="totalCapacityUsed" value="90" oninput="calculate()" class="w-full border p-1">
+                </div>
+                <div class="form-group mb-2">
+                    <label for="overallEfficiency" class="font-bold">Overall Efficiency (%):</label>
+                    <input type="number" id="overallEfficiency" value="80" oninput="calculate()" class="w-full border p-1">
+                </div>
+                <div id="result" class="mt-4"></div>
+            </div>
+        </div>
+    </div>
+
+    
+
+    <!--Aero configuration-->
+    <div id="container5" class="bg-white p-5 rounded-lg shadow-md">
+        <button onclick="toggleCalculator('calculator5')" class="bg-blue-500 text-white py-2 px-4 rounded mb-4 hover:bg-blue-700">Wing Configurator</button>
+        <div id="calculator5" class="hidden">
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <h2 class="text-xl font-bold mb-4">Wing Configurator</h2>
+                    <form id="wingCalculator">
+                        <div class="form-group mb-2">
+                            <label for="wingLoading" class="font-bold">Wing Loading (N/m^2):</label>
+                            <input type="number" id="wingLoading" required class="w-full border p-1">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label for="aspectRatio" class="font-bold">Aspect Ratio:</label>
+                            <input type="number" id="aspectRatio" required class="w-full border p-1">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label for="taperRatio" class="font-bold">Taper Ratio:</label>
+                            <input type="number" id="taperRatio" required class="w-full border p-1">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label for="oswaldEfficiency" class="font-bold">Oswald Efficiency:</label>
+                            <input type="number" id="oswaldEfficiency" required class="w-full border p-1">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label for="maxLiftCoefficient" class="font-bold">Max Lift Coefficient:</label>
+                            <input type="number" id="maxLiftCoefficient" required class="w-full border p-1">
+                        </div>
+                    </form>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold mb-4">Vertical Tail</h2>
+                    <form id="verticalTailCalculator">
+                        <div class="form-group mb-2">
+                            <label for="verticalArea" class="font-bold">Vertical Tail Area (m^2):</label>
+                            <input type="number" id="verticalArea" required class="w-full border p-1">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label for="verticalAspectRatio" class="font-bold">Aspect Ratio:</label>
+                            <input type="number" id="verticalAspectRatio" required class="w-full border p-1">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label for="verticalTaperRatio" class="font-bold">Taper Ratio:</label>
+                            <input type="number" id="verticalTaperRatio" required class="w-full border p-1">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label for="verticalEfficiency" class="font-bold">Efficiency:</label>
+                            <input type="number" id="verticalEfficiency" required class="w-full border p-1">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label for="verticalMaxLiftCoefficient" class="font-bold">Max Lift Coefficient:</label>
+                            <input type="number" id="verticalMaxLiftCoefficient" required class="w-full border p-1">
+                        </div>
+                    </form>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold mb-4">Horizontal Tail</h2>
+                    <form id="horizontalTailCalculator">
+                        <div class="form-group mb-2">
+                            <label for="horizontalArea" class="font-bold">Horizontal Tail Area (m^2):</label>
+                            <input type="number" id="horizontalArea" required class="w-full border p-1">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label for="horizontalAspectRatio" class="font-bold">Aspect Ratio:</label>
+                            <input type="number" id="horizontalAspectRatio" required class="w-full border p-1">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label for="horizontalTaperRatio" class="font-bold">Taper Ratio:</label>
+                            <input type="number" id="horizontalTaperRatio" required class="w-full border p-1">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label for="horizontalEfficiency" class="font-bold">Efficiency:</label>
+                            <input type="number" id="horizontalEfficiency" required class="w-full border p-1">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label for="horizontalMaxLiftCoefficient" class="font-bold">Max Lift Coefficient:</label>
+                            <input type="number" id="horizontalMaxLiftCoefficient" required class="w-full border p-1">
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <h2 class="text-xl font-bold mt-4">Results:</h2>
+            <div id="results" class="mt-2"></div>
+        </div>
+    </div>
+
+
+    <div id="results-section" class="bg-white p-5 rounded-lg shadow-md mt-5">
+        <h2 class="text-xl font-bold mb-4">Results</h2>
+        <h3 class="text-lg font-bold mb-2">General Results</h3>
+        <table class="w-full text-left mb-4">
+            <tbody>
+                <tr>
+                    <td class="p-2">Total Mass</td>
+                    <td class="p-2">
+                        <script>
+                            document.write((5 + 2.92).toFixed(3) + ' kg'); // Example calculation
+                        </script>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2">Mass Fraction</td>
+                    <td class="p-2">
+                        <script>
+                            document.write((36.87).toFixed(2) + '%'); // Example calculation
+                        </script>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2">Min Drag Airspeed</td>
+                    <td class="p-2">
+                        <script>
+                            document.write((25.08).toFixed(2) + ' m/s'); // Example calculation
+                        </script>
+                    </td>
+                    <td class="p-2">
+                        <script>
+                            document.write((25.08 * 3.6).toFixed(2) + ' km/h'); // Example calculation
+                        </script>
+                    </td>
+                    <td class="p-2">
+                        <script>
+                            document.write((25.08 * 2.237).toFixed(2) + ' mph'); // Example calculation
+                        </script>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2">Min Power Airspeed</td>
+                    <td class="p-2">
+                        <script>
+                            document.write((19.06).toFixed(2) + ' m/s'); // Example calculation
+                        </script>
+                    </td>
+                    <td class="p-2">
+                        <script>
+                            document.write((19.06 * 3.6).toFixed(2) + ' km/h'); // Example calculation
+                        </script>
+                    </td>
+                    <td class="p-2">
+                        <script>
+                            document.write((19.06 * 2.237).toFixed(2) + ' mph'); // Example calculation
+                        </script>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2">Min Airspeed (Stall Onset)</td>
+                    <td class="p-2">
+                        <script>
+                            document.write((23.91).toFixed(2) + ' m/s'); // Example calculation
+                        </script>
+                    </td>
+                    <td class="p-2">
+                        <script>
+                            document.write((23.91 * 3.6).toFixed(2) + ' km/h'); // Example calculation
+                        </script>
+                    </td>
+                    <td class="p-2">
+                        <script>
+                            document.write((23.91 * 2.237).toFixed(2) + ' mph'); // Example calculation
+                        </script>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3 class="text-lg font-bold mb-2">Condition Results</h3>
+        <table class="w-full text-left mb-4">
+            <tbody>
+                <tr>
+                    <td class="p-2">Cruise Airspeed</td>
+                    <td class="p-2">
+                        <script>
+                            document.write((25).toFixed(2) + ' m/s'); // Example calculation
+                        </script>
+                    </td>
+                    <td class="p-2">
+                        <script>
+                            document.write((25 * 3.6).toFixed(2) + ' km/h'); // Example calculation
+                        </script>
+                    </td>
+                    <td class="p-2">
+                        <script>
+                            document.write((25 * 2.237).toFixed(2) + ' mph'); // Example calculation
+                        </script>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2">Lift Coefficient</td>
+                    <td class="p-2">
+                        <script>
+                            document.write((1.02).toFixed(2)); // Example calculation
+                        </script>
+                    </td>
+                    <td class="p-2">Lift</td>
+                    <td class="p-2">
+                        <script>
+                            document.write((7.92).toFixed(2) + ' kg'); // Example calculation
+                        </script>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2">Drag Coefficient</td>
+                    <td class="p-2">
+                        <script>
+                            document.write((0.1107).toFixed(4)); // Example calculation
+                        </script>
+                    </td>
+                    <td class="p-2">Drag</td>
+                    <td class="p-2">
+                        <script>
+                            document.write((0.86).toFixed(2) + ' kg'); // Example calculation
+                        </script>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2">Lift to Drag Ratio (L/D)</td>
+                    <td class="p-2" colspan="3">
+                        <script>
+                            document.write((9.26).toFixed(2)); // Example calculation
+                        </script>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2">Stall Margin</td>
+                    <td class="p-2">
+                        <script>
+                            document.write((1.09).toFixed(2) + ' m/s'); // Example calculation
+                        </script>
+                    </td>
+                    <td class="p-2">
+                        <script>
+                            document.write((1.09 * 3.6).toFixed(2) + ' km/h'); // Example calculation
+                        </script>
+                    </td>
+                    <td class="p-2">
+                        <script>
+                            document.write((1.09 * 2.237).toFixed(2) + ' mph'); // Example calculation
+                        </script>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2">Estimated Flight Time</td>
+                    <td class="p-2">
+                        <script>
+                            document.write((64.2).toFixed(1) + ' min'); // Example calculation
+                        </script>
+                    </td>
+                    <td class="p-2" colspan="2">
+                        <script>
+                            document.write((64.2 / 60).toFixed(2) + ' hr'); // Example calculation
+                        </script>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2">Estimated Range</td>
+                    <td class="p-2">
+                        <script>
+                            document.write((96.3).toFixed(1) + ' km'); // Example calculation
+                        </script>
+                    </td>
+                    <td class="p-2" colspan="2">
+                        <script>
+                            document.write((96.3 / 1.609).toFixed(2) + ' mi'); // Example calculation
+                        </script>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+
+
+
+    <script>
+        function toggleCalculator(calculatorId) {
+            const calculator = document.getElementById(calculatorId);
+            calculator.classList.toggle('hidden');
+            updatePlot(calculatorId); // Update plot when calculator is toggled
+        }
+    </script>
+
+    <script type="text/javascript" src="aero_config.js"></script>
+    <script type="text/javascript" src="config_ws.js"></script>
+    <script type="text/javascript" src="config_batt.js"></script>
+</body>
+</html>
